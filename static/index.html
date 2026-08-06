@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Meeting Summarizer & Task Planner</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 850px; margin: 30px auto; padding: 20px; background-color: #f4f7f6; color: #333; }
+        .container { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; }
+        .input-group { margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        textarea { width: 100%; height: 120px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        input[type="file"] { margin-top: 5px; }
+        button { background-color: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #2980b9; }
+        .card { background: #fafafa; border-left: 4px solid #3498db; padding: 15px; margin-top: 20px; border-radius: 4px; }
+        #loading { display: none; margin-top: 15px; font-weight: bold; color: #e67e22; }
+        pre { white-space: pre-wrap; font-family: inherit; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ GenAI Meeting Copilot</h1>
+        <p>Extract core concepts and turn 5-10 min long voice calls or transcripts into clear milestone tasks.</p>
+
+        <form id="meetingForm">
+            <div class="input-group">
+                <label for="audioFile">Option 1: Upload Audio File (.wav, .mp3, .m4a)</label>
+                <input type="file" id="audioFile" accept="audio/*">
+            </div>
+
+            <div class="input-group">
+                <label for="transcriptText">Option 2: Or Paste Transcript Text</label>
+                <textarea id="transcriptText" placeholder="Paste transcript here..."></textarea>
+            </div>
+
+            <button type="button" onclick="processMeeting()">Run Agents Workflow</button>
+        </form>
+
+        <div id="loading">⏳ Agents running: Transcribing ➔ Summarizing ➔ Planning Tasks...</div>
+
+        <div class="card">
+            <h3>📝 Summary & Concepts</h3>
+            <pre id="summaryOut">Awaiting input...</pre>
+        </div>
+
+        <div class="card">
+            <h3>🎯 Milestone & Task Breakdown</h3>
+            <pre id="tasksOut">Awaiting input...</pre>
+        </div>
+
+        <div class="card" style="border-left-color: #2ecc71;">
+            <h3>📁 MCP File Export Status</h3>
+            <pre id="mcpOut">Awaiting input...</pre>
+        </div>
+    </div>
+
+    <script>
+        async function processMeeting() {
+            const loading = document.getElementById('loading');
+            const audioFile = document.getElementById('audioFile').files[0];
+            const transcriptText = document.getElementById('transcriptText').value;
+
+            if (!audioFile && !transcriptText.trim()) {
+                alert("Please upload an audio file or paste text!");
+                return;
+            }
+
+            loading.style.display = 'block';
+
+            const formData = new FormData();
+            if (audioFile) formData.append('file', audioFile);
+            if (transcriptText) formData.append('transcript', transcriptText);
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                document.getElementById('summaryOut').innerText = data.summary;
+                document.getElementById('tasksOut').innerText = data.tasks;
+                document.getElementById('mcpOut').innerText = data.mcp_status;
+            } catch (err) {
+                alert("Error executing workflow: " + err);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
